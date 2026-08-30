@@ -4,6 +4,7 @@ import {
   getAll as getTasks,
   create,
   update,
+  getOne,
 } from "../../services/tarea.service";
 
 import { getAll as getCategories } from "../../services/category.service";
@@ -62,6 +63,10 @@ function TaskList() {
   const [editSelectedTags, setEditSelectedTags] = useState([]);
   const [editError, setEditError] = useState("");
   const [editLoading, setEditLoading] = useState(false);
+
+  const [viewingTask, setViewingTask] = useState(null);
+  const [viewLoading, setViewLoading] = useState(false);
+  const [viewError, setViewError] = useState("");
 
   useEffect(() => {
     loadData();
@@ -211,6 +216,22 @@ function TaskList() {
       setEditError("No se pudo actualizar la tarea.");
     } finally {
       setEditLoading(false);
+    }
+  };
+  const handleView = async (task) => {
+    try {
+      setViewLoading(true);
+      setViewError("");
+
+      const data = await getOne(task.id);
+
+      setViewingTask(data);
+    } catch (error) {
+      console.error("Error al obtener la tarea:", error);
+
+      setViewError("No se pudo obtener la información de la tarea.");
+    } finally {
+      setViewLoading(false);
     }
   };
 
@@ -536,6 +557,159 @@ function TaskList() {
                 </form>
               </DialogContent>
             </Dialog>
+            <Dialog
+              open={!!viewingTask || viewLoading}
+              onOpenChange={(open) => {
+                if (!open && !viewLoading) {
+                  setViewingTask(null);
+                  setViewError("");
+                }
+              }}
+            >
+              <DialogContent className="sm:max-w-[550px]">
+                <DialogHeader>
+                  <DialogTitle>Detalle de la tarea</DialogTitle>
+
+                  <DialogDescription>
+                    Información completa de la tarea seleccionada.
+                  </DialogDescription>
+                </DialogHeader>
+
+                {viewLoading && (
+                  <div className="py-8 text-center text-muted-foreground">
+                    Cargando información...
+                  </div>
+                )}
+
+                {viewError && (
+                  <div className="py-4 text-sm text-destructive">
+                    {viewError}
+                  </div>
+                )}
+
+                {viewingTask && !viewLoading && (
+                  <div className="space-y-5 py-4">
+                    {/* ID */}
+
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium text-muted-foreground">
+                        ID
+                      </p>
+
+                      <p className="text-sm">{viewingTask.id}</p>
+                    </div>
+
+                    {/* TÍTULO */}
+
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium text-muted-foreground">
+                        Título
+                      </p>
+
+                      <p className="text-base font-semibold">
+                        {viewingTask.title}
+                      </p>
+                    </div>
+
+                    {/* DESCRIPCIÓN */}
+
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium text-muted-foreground">
+                        Descripción
+                      </p>
+
+                      <p className="text-sm">
+                        {viewingTask.description || "Sin descripción"}
+                      </p>
+                    </div>
+
+                    {/* ESTADO */}
+
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium text-muted-foreground">
+                        Estado
+                      </p>
+
+                      <p className="text-sm">
+                        {viewingTask.status ? "Completada" : "Pendiente"}
+                      </p>
+                    </div>
+
+                    {/* CATEGORÍA */}
+
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium text-muted-foreground">
+                        Categoría
+                      </p>
+
+                      <p className="text-sm">
+                        {viewingTask.category?.name || "Sin categoría"}
+                      </p>
+                    </div>
+
+                    {/* TAGS */}
+
+                    <div className="space-y-2">
+                      <p className="text-sm font-medium text-muted-foreground">
+                        Etiquetas
+                      </p>
+
+                      {viewingTask.tags?.length > 0 ? (
+                        <div className="flex flex-wrap gap-2">
+                          {viewingTask.tags.map((tag) => (
+                            <span
+                              key={tag.id}
+                              className="rounded-md border px-2 py-1 text-xs"
+                            >
+                              {tag.name}
+                            </span>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-sm">Sin etiquetas</p>
+                      )}
+                    </div>
+
+                    {/* FECHA CREACIÓN */}
+
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium text-muted-foreground">
+                        Creado
+                      </p>
+
+                      <p className="text-sm">
+                        {new Date(viewingTask.created_at).toLocaleString(
+                          "es-ES",
+                        )}
+                      </p>
+                    </div>
+
+                    {/* FECHA ACTUALIZACIÓN */}
+
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium text-muted-foreground">
+                        Actualizado
+                      </p>
+
+                      <p className="text-sm">
+                        {new Date(viewingTask.updated_at).toLocaleString(
+                          "es-ES",
+                        )}
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                <DialogFooter>
+                  <Button
+                    variant="outline"
+                    onClick={() => setViewingTask(null)}
+                  >
+                    Cerrar
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
           </div>
         </CardHeader>
 
@@ -544,7 +718,7 @@ function TaskList() {
             tasks={tasks}
             onEdit={handleEdit}
             onDelete={() => {}}
-            onView={() => {}}
+            onView={handleView}
           />
         </CardContent>
       </Card>
