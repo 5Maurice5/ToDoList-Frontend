@@ -11,11 +11,7 @@ import { Button } from "../ui/button";
 
 import { Pencil, Trash2 } from "lucide-react";
 
-function CategoryTable({ categories }) {
-  const handleEdit = (category) => {
-    console.log("Editar categoría:", category);
-  };
-
+function CategoryTable({ categories, onEdit }) {
   const handleDelete = (category) => {
     console.log("Eliminar categoría:", category);
   };
@@ -43,17 +39,15 @@ function CategoryTable({ categories }) {
 
                 <TableCell>
                   <div className="flex justify-end gap-2">
-                    {/* Editar */}
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => handleEdit(category)}
+                      onClick={() => onEdit(category)}
                     >
                       <Pencil className="mr-2 h-4 w-4" />
                       Editar
                     </Button>
 
-                    {/* Eliminar */}
                     <Button
                       variant="destructive"
                       size="sm"
