@@ -1,6 +1,10 @@
 import { useEffect, useState } from "react";
 
-import { getAll as getTasks, create } from "../../services/tarea.service";
+import {
+  getAll as getTasks,
+  create,
+  update,
+} from "../../services/tarea.service";
 
 import { getAll as getCategories } from "../../services/category.service";
 
@@ -49,6 +53,15 @@ function TaskList() {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  const [editingTask, setEditingTask] = useState(null);
+  const [editTitle, setEditTitle] = useState("");
+  const [editDescription, setEditDescription] = useState("");
+  const [editStatus, setEditStatus] = useState(false);
+  const [editCategoryId, setEditCategoryId] = useState("");
+  const [editSelectedTags, setEditSelectedTags] = useState([]);
+  const [editError, setEditError] = useState("");
+  const [editLoading, setEditLoading] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -132,6 +145,72 @@ function TaskList() {
       setCategoryId("");
       setSelectedTags([]);
       setError("");
+    }
+  };
+
+  const handleEdit = (task) => {
+    setEditingTask(task);
+
+    setEditTitle(task.title);
+    setEditDescription(task.description ?? "");
+    setEditStatus(task.status);
+    setEditCategoryId(task.category?.id?.toString() ?? "");
+
+    setEditSelectedTags(task.tags?.map((tag) => tag.id) ?? []);
+
+    setEditError("");
+  };
+  const handleEditTagChange = (tagId) => {
+    setEditSelectedTags((currentTags) => {
+      const id = Number(tagId);
+
+      if (currentTags.includes(id)) {
+        return currentTags.filter((tag) => tag !== id);
+      }
+
+      return [...currentTags, id];
+    });
+  };
+  const handleUpdate = async (event) => {
+    event.preventDefault();
+
+    if (!editTitle.trim()) {
+      setEditError("El título es obligatorio.");
+      return;
+    }
+
+    if (!editCategoryId) {
+      setEditError("Debes seleccionar una categoría.");
+      return;
+    }
+
+    try {
+      setEditLoading(true);
+      setEditError("");
+
+      await update(editingTask.id, {
+        title: editTitle.trim(),
+        description: editDescription.trim(),
+        status: editStatus,
+        category_id: Number(editCategoryId),
+        tags: editSelectedTags,
+      });
+
+      await loadData();
+
+      setEditingTask(null);
+
+      setEditTitle("");
+      setEditDescription("");
+      setEditStatus(false);
+      setEditCategoryId("");
+      setEditSelectedTags([]);
+    } catch (error) {
+      console.error("Error al actualizar la tarea:", error);
+
+      setEditError("No se pudo actualizar la tarea.");
+    } finally {
+      setEditLoading(false);
     }
   };
 
@@ -304,13 +383,166 @@ function TaskList() {
                 </form>
               </DialogContent>
             </Dialog>
+            <Dialog
+              open={!!editingTask}
+              onOpenChange={(open) => {
+                if (!open && !editLoading) {
+                  setEditingTask(null);
+                  setEditError("");
+                }
+              }}
+            >
+              <DialogContent className="sm:max-w-[500px]">
+                <form onSubmit={handleUpdate}>
+                  <DialogHeader>
+                    <DialogTitle>Editar tarea</DialogTitle>
+
+                    <DialogDescription>
+                      Modifica los datos de la tarea.
+                    </DialogDescription>
+                  </DialogHeader>
+
+                  <div className="grid gap-5 py-6">
+                    {/* TÍTULO */}
+
+                    <div className="grid gap-2">
+                      <Label htmlFor="edit-title">Título</Label>
+
+                      <Input
+                        id="edit-title"
+                        value={editTitle}
+                        onChange={(event) => {
+                          setEditTitle(event.target.value);
+
+                          if (editError) {
+                            setEditError("");
+                          }
+                        }}
+                        placeholder="Ej. Comprar materiales"
+                        autoFocus
+                      />
+                    </div>
+
+                    {/* DESCRIPCIÓN */}
+
+                    <div className="grid gap-2">
+                      <Label htmlFor="edit-description">Descripción</Label>
+
+                      <textarea
+                        id="edit-description"
+                        value={editDescription}
+                        onChange={(event) =>
+                          setEditDescription(event.target.value)
+                        }
+                        placeholder="Descripción de la tarea"
+                        className="min-h-[100px] rounded-md border bg-background px-3 py-2 text-sm"
+                      />
+                    </div>
+
+                    {/* CATEGORÍA */}
+
+                    <div className="grid gap-2">
+                      <Label htmlFor="edit-category">Categoría</Label>
+
+                      <select
+                        id="edit-category"
+                        value={editCategoryId}
+                        onChange={(event) => {
+                          setEditCategoryId(event.target.value);
+
+                          if (editError) {
+                            setEditError("");
+                          }
+                        }}
+                        className="h-10 rounded-md border bg-background px-3 text-sm"
+                      >
+                        <option value="">Selecciona una categoría</option>
+
+                        {categories.map((category) => (
+                          <option key={category.id} value={category.id}>
+                            {category.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* TAGS */}
+
+                    <div className="grid gap-2">
+                      <Label>Etiquetas</Label>
+
+                      <div className="rounded-md border p-3">
+                        {tags.length > 0 ? (
+                          <div className="grid gap-2">
+                            {tags.map((tag) => (
+                              <label
+                                key={tag.id}
+                                className="flex items-center gap-2 text-sm"
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={editSelectedTags.includes(tag.id)}
+                                  onChange={() => handleEditTagChange(tag.id)}
+                                />
+
+                                {tag.name}
+                              </label>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="text-sm text-muted-foreground">
+                            No hay tags registrados.
+                          </p>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* ESTADO */}
+
+                    <div className="flex items-center gap-2">
+                      <input
+                        id="edit-status"
+                        type="checkbox"
+                        checked={editStatus}
+                        onChange={(event) =>
+                          setEditStatus(event.target.checked)
+                        }
+                      />
+
+                      <Label htmlFor="edit-status">Tarea completada</Label>
+                    </div>
+
+                    {/* ERROR */}
+
+                    {editError && (
+                      <p className="text-sm text-destructive">{editError}</p>
+                    )}
+                  </div>
+
+                  <DialogFooter>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setEditingTask(null)}
+                      disabled={editLoading}
+                    >
+                      Cancelar
+                    </Button>
+
+                    <Button type="submit" disabled={editLoading}>
+                      {editLoading ? "Guardando..." : "Guardar cambios"}
+                    </Button>
+                  </DialogFooter>
+                </form>
+              </DialogContent>
+            </Dialog>
           </div>
         </CardHeader>
 
         <CardContent>
           <TaskTable
             tasks={tasks}
-            onEdit={() => {}}
+            onEdit={handleEdit}
             onDelete={() => {}}
             onView={() => {}}
           />
