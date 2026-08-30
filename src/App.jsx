@@ -1,23 +1,27 @@
-import { useEffect } from "react"
-import { getAllTask } from "./services/tarea.service"
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+
+import DashboardLayout from "./components/layout/DashboardLayout";
+
+import TaskList from "./components/tasks/TaskList";
+import UserList from "./components/users/UserList";
+import CategoryList from "./components/categories/CategoryList";
+import TagList from "./components/tags/TagList";
 
 function App() {
-
-  useEffect(() => {
-    const loadTasks = async () => {
-      try {
-        const tasks = await getAllTask();
-        console.log(tasks);
-        
-      } catch (error) {
-        console.error("Error al obtener las tareas: ", error);
-      }
-    }
-    loadTasks();
-  }, [])
-
   return (
-    <div>Ticket 6 - Consumo de API</div>
-  )
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<DashboardLayout />}>
+          <Route index element={<Navigate to="/tasks" replace />} />
+
+          <Route path="tasks" element={<TaskList />} />
+          <Route path="users" element={<UserList />} />
+          <Route path="categories" element={<CategoryList />} />
+          <Route path="tags" element={<TagList />} />
+        </Route>
+      </Routes>
+    </BrowserRouter>
+  );
 }
-export default App
+
+export default App;
