@@ -60,3 +60,15 @@ export const deleteCategory = async (id) => {
 
   return result.data;
 };
+
+export const getOne = async (id) => {
+  const response = await fetch(`${API_URL}/categories/${id}`);
+
+  if (!response.ok) {
+    throw new Error("Error al obtener la categoría");
+  }
+
+  const result = await response.json();
+
+  return result.data;
+};

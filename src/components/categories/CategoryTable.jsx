@@ -9,9 +9,9 @@ import {
 
 import { Button } from "../ui/button";
 
-import { Pencil, Trash2 } from "lucide-react";
+import { Pencil, Trash2, Eye } from "lucide-react";
 
-function CategoryTable({ categories, onEdit, onDelete }) {
+function CategoryTable({ categories, onEdit, onDelete, onView }) {
   return (
     <div className="rounded-md border">
       <Table>
@@ -35,6 +35,16 @@ function CategoryTable({ categories, onEdit, onDelete }) {
 
                 <TableCell>
                   <div className="flex justify-end gap-2">
+                    {/* Ver */}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => onView(category)}
+                      title="Ver categoría"
+                    >
+                      <Eye className="h-4 w-4" />
+                    </Button>
+
                     {/* Editar */}
                     <Button
                       variant="outline"

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 
 import {
   getAll,
+  getOne,
   create,
   update,
   deleteCategory,
@@ -57,6 +58,9 @@ function CategoryList() {
   const [deletingCategory, setDeletingCategory] = useState(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [deleteError, setDeleteError] = useState("");
+  const [viewingCategory, setViewingCategory] = useState(null);
+  const [viewLoading, setViewLoading] = useState(false);
+  const [viewError, setViewError] = useState("");
 
   useEffect(() => {
     loadCategories();
@@ -165,6 +169,22 @@ function CategoryList() {
       setDeleteError("No se pudo eliminar la categoría.");
     } finally {
       setDeleteLoading(false);
+    }
+  };
+  const handleView = async (category) => {
+    try {
+      setViewLoading(true);
+      setViewError("");
+
+      const data = await getOne(category.id);
+
+      setViewingCategory(data);
+    } catch (error) {
+      console.error("Error al obtener la categoría:", error);
+
+      setViewError("No se pudo obtener la información de la categoría.");
+    } finally {
+      setViewLoading(false);
     }
   };
 
@@ -345,12 +365,91 @@ function CategoryList() {
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
+            <Dialog
+              open={!!viewingCategory || viewLoading}
+              onOpenChange={(open) => {
+                if (!open && !viewLoading) {
+                  setViewingCategory(null);
+                  setViewError("");
+                }
+              }}
+            >
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Detalle de categoría</DialogTitle>
+
+                  <DialogDescription>
+                    Información de la categoría seleccionada.
+                  </DialogDescription>
+                </DialogHeader>
+
+                {viewLoading && (
+                  <div className="py-8 text-center text-muted-foreground">
+                    Cargando información...
+                  </div>
+                )}
+
+                {viewError && (
+                  <div className="py-4 text-sm text-destructive">
+                    {viewError}
+                  </div>
+                )}
+
+                {viewingCategory && !viewLoading && (
+                  <div className="space-y-5 py-4">
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium text-muted-foreground">
+                        Nombre
+                      </p>
+
+                      <p className="text-base font-semibold">
+                        {viewingCategory.name}
+                      </p>
+                    </div>
+
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium text-muted-foreground">
+                        Creado
+                      </p>
+
+                      <p className="text-sm">
+                        {new Date(viewingCategory.created_at).toLocaleString(
+                          "es-ES",
+                        )}
+                      </p>
+                    </div>
+
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium text-muted-foreground">
+                        Actualizado
+                      </p>
+
+                      <p className="text-sm">
+                        {new Date(viewingCategory.updated_at).toLocaleString(
+                          "es-ES",
+                        )}
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                <DialogFooter>
+                  <Button
+                    variant="outline"
+                    onClick={() => setViewingCategory(null)}
+                  >
+                    Cerrar
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
           </div>
         </CardHeader>
 
         <CardContent>
           <CategoryTable
             categories={categories}
+            onView={handleView}
             onEdit={handleEdit}
             onDelete={handleDelete}
           />
