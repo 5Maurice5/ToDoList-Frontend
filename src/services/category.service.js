@@ -46,3 +46,17 @@ export const update = async (id, category) => {
 
   return result.data;
 };
+
+export const deleteCategory = async (id) => {
+  const response = await fetch(`${API_URL}/categories/${id}`, {
+    method: "DELETE",
+  });
+
+  if (!response.ok) {
+    throw new Error("Error al eliminar la categoría");
+  }
+
+  const result = await response.json();
+
+  return result.data;
+};

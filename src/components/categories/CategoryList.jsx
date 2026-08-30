@@ -1,6 +1,11 @@
 import { useEffect, useState } from "react";
 
-import { getAll, create, update } from "../../services/category.service";
+import {
+  getAll,
+  create,
+  update,
+  deleteCategory,
+} from "../../services/category.service";
 import CategoryTable from "./CategoryTable";
 
 import {
@@ -12,6 +17,16 @@ import {
 } from "../ui/card";
 
 import { Button } from "../ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "../ui/alert-dialog";
 
 import {
   Dialog,
@@ -39,6 +54,9 @@ function CategoryList() {
   const [editName, setEditName] = useState("");
   const [editError, setEditError] = useState("");
   const [editLoading, setEditLoading] = useState(false);
+  const [deletingCategory, setDeletingCategory] = useState(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
 
   useEffect(() => {
     loadCategories();
@@ -121,6 +139,32 @@ function CategoryList() {
     if (!value) {
       setName("");
       setError("");
+    }
+  };
+  const handleDelete = (category) => {
+    setDeletingCategory(category);
+    setDeleteError("");
+  };
+  const confirmDelete = async () => {
+    if (!deletingCategory) {
+      return;
+    }
+
+    try {
+      setDeleteLoading(true);
+      setDeleteError("");
+
+      await deleteCategory(deletingCategory.id);
+
+      await loadCategories();
+
+      setDeletingCategory(null);
+    } catch (error) {
+      console.error("Error al eliminar la categoría:", error);
+
+      setDeleteError("No se pudo eliminar la categoría.");
+    } finally {
+      setDeleteLoading(false);
     }
   };
 
@@ -262,11 +306,54 @@ function CategoryList() {
                 </form>
               </DialogContent>
             </Dialog>
+            <AlertDialog
+              open={!!deletingCategory}
+              onOpenChange={(open) => {
+                if (!open && !deleteLoading) {
+                  setDeletingCategory(null);
+                  setDeleteError("");
+                }
+              }}
+            >
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>¿Eliminar categoría?</AlertDialogTitle>
+
+                  <AlertDialogDescription>
+                    ¿Estás seguro de que deseas eliminar la categoría{" "}
+                    <strong>{deletingCategory?.name}</strong>? Esta acción no se
+                    puede deshacer.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+
+                {deleteError && (
+                  <p className="text-sm text-destructive">{deleteError}</p>
+                )}
+
+                <AlertDialogFooter>
+                  <AlertDialogCancel disabled={deleteLoading}>
+                    Cancelar
+                  </AlertDialogCancel>
+
+                  <AlertDialogAction
+                    onClick={confirmDelete}
+                    disabled={deleteLoading}
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  >
+                    {deleteLoading ? "Eliminando..." : "Eliminar"}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </div>
         </CardHeader>
 
         <CardContent>
-          <CategoryTable categories={categories} onEdit={handleEdit} />
+          <CategoryTable
+            categories={categories}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+          />
         </CardContent>
       </Card>
     </div>
