@@ -5,6 +5,7 @@ import {
   create,
   update,
   getOne,
+  deleteTask,
 } from "../../services/tarea.service";
 
 import { getAll as getCategories } from "../../services/category.service";
@@ -32,7 +33,16 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "../ui/dialog";
-
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "../ui/alert-dialog";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 
@@ -67,6 +77,10 @@ function TaskList() {
   const [viewingTask, setViewingTask] = useState(null);
   const [viewLoading, setViewLoading] = useState(false);
   const [viewError, setViewError] = useState("");
+
+  const [deletingTask, setDeletingTask] = useState(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
 
   useEffect(() => {
     loadData();
@@ -232,6 +246,32 @@ function TaskList() {
       setViewError("No se pudo obtener la información de la tarea.");
     } finally {
       setViewLoading(false);
+    }
+  };
+  const handleDelete = (task) => {
+    setDeletingTask(task);
+    setDeleteError("");
+  };
+  const confirmDelete = async () => {
+    if (!deletingTask) {
+      return;
+    }
+
+    try {
+      setDeleteLoading(true);
+      setDeleteError("");
+
+      await deleteTask(deletingTask.id);
+
+      await loadData();
+
+      setDeletingTask(null);
+    } catch (error) {
+      console.error("Error al eliminar la tarea:", error);
+
+      setDeleteError("No se pudo eliminar la tarea.");
+    } finally {
+      setDeleteLoading(false);
     }
   };
 
@@ -710,6 +750,45 @@ function TaskList() {
                 </DialogFooter>
               </DialogContent>
             </Dialog>
+            <AlertDialog
+              open={!!deletingTask}
+              onOpenChange={(open) => {
+                if (!open && !deleteLoading) {
+                  setDeletingTask(null);
+                  setDeleteError("");
+                }
+              }}
+            >
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>¿Eliminar tarea?</AlertDialogTitle>
+
+                  <AlertDialogDescription>
+                    ¿Estás seguro de que deseas eliminar la tarea{" "}
+                    <strong>{deletingTask?.title}</strong>? Esta acción no se
+                    puede deshacer.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+
+                {deleteError && (
+                  <p className="text-sm text-destructive">{deleteError}</p>
+                )}
+
+                <AlertDialogFooter>
+                  <AlertDialogCancel disabled={deleteLoading}>
+                    Cancelar
+                  </AlertDialogCancel>
+
+                  <AlertDialogAction
+                    onClick={confirmDelete}
+                    disabled={deleteLoading}
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  >
+                    {deleteLoading ? "Eliminando..." : "Eliminar"}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </div>
         </CardHeader>
 
@@ -717,7 +796,7 @@ function TaskList() {
           <TaskTable
             tasks={tasks}
             onEdit={handleEdit}
-            onDelete={() => {}}
+            onDelete={handleDelete}
             onView={handleView}
           />
         </CardContent>
