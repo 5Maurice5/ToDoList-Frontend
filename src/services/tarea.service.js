@@ -1,7 +1,7 @@
-const API_URL = import.meta.env.VITE_API_URL;
+import { apiFetch } from "./api";
 
 export const getAll = async () => {
-  const response = await fetch(`${API_URL}/tasks`);
+  const response = await apiFetch("/tasks");
 
   if (!response.ok) {
     throw new Error("Error al obtener las tareas");
@@ -13,7 +13,7 @@ export const getAll = async () => {
 };
 
 export const create = async (task) => {
-  const response = await fetch(`${API_URL}/tasks`, {
+  const response = await apiFetch("/tasks", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -31,7 +31,7 @@ export const create = async (task) => {
 };
 
 export const update = async (id, task) => {
-  const response = await fetch(`${API_URL}/tasks/${id}`, {
+  const response = await apiFetch(`/tasks/${id}`, {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
@@ -49,7 +49,7 @@ export const update = async (id, task) => {
 };
 
 export const deleteTask = async (id) => {
-  const response = await fetch(`${API_URL}/tasks/${id}`, {
+  const response = await apiFetch(`/tasks/${id}`, {
     method: "DELETE",
   });
 
@@ -63,7 +63,7 @@ export const deleteTask = async (id) => {
 };
 
 export const getOne = async (id) => {
-  const response = await fetch(`${API_URL}/tasks/${id}`);
+  const response = await apiFetch(`/tasks/${id}`);
 
   if (!response.ok) {
     throw new Error("Error al obtener la tarea");
