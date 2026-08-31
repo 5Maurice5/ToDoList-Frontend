@@ -9,7 +9,13 @@ import {
 } from "../../services/tag.service";
 
 import TagTable from "./TagTable";
-
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationPrevious,
+  PaginationNext,
+} from "../ui/pagination";
 import {
   Card,
   CardContent,
@@ -66,16 +72,25 @@ function TagList() {
   const [viewLoading, setViewLoading] = useState(false);
   const [viewError, setViewError] = useState("");
 
-  useEffect(() => {
-    loadTags();
-  }, []);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pagination, setPagination] = useState(null);
 
-  const loadTags = async () => {
+  useEffect(() => {
+    loadTags(currentPage);
+  }, [currentPage]);
+
+  const loadTags = async (page = 1) => {
     try {
-      const data = await getAll();
-      setTags(data);
+      setLoading(true);
+
+      const result = await getAll(page);
+
+      setTags(result.data);
+      setPagination(result.meta);
     } catch (error) {
       console.error("Error al obtener los tags:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -277,6 +292,43 @@ function TagList() {
             onEdit={handleEdit}
             onDelete={handleDelete}
           />
+          {pagination && pagination.last_page > 1 && (
+            <Pagination className="mt-4">
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious
+                    href="#"
+                    onClick={(event) => {
+                      event.preventDefault();
+
+                      if (pagination.current_page > 1) {
+                        setCurrentPage(pagination.current_page - 1);
+                      }
+                    }}
+                  />
+                </PaginationItem>
+
+                <PaginationItem>
+                  <span className="px-4 text-sm">
+                    Página {pagination.current_page} de {pagination.last_page}
+                  </span>
+                </PaginationItem>
+
+                <PaginationItem>
+                  <PaginationNext
+                    href="#"
+                    onClick={(event) => {
+                      event.preventDefault();
+
+                      if (pagination.current_page < pagination.last_page) {
+                        setCurrentPage(pagination.current_page + 1);
+                      }
+                    }}
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
+          )}
         </CardContent>
       </Card>
 

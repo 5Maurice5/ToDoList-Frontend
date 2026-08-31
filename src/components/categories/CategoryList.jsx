@@ -8,7 +8,13 @@ import {
   deleteCategory,
 } from "../../services/category.service";
 import CategoryTable from "./CategoryTable";
-
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationPrevious,
+  PaginationNext,
+} from "../ui/pagination";
 import {
   Card,
   CardContent,
@@ -61,17 +67,25 @@ function CategoryList() {
   const [viewingCategory, setViewingCategory] = useState(null);
   const [viewLoading, setViewLoading] = useState(false);
   const [viewError, setViewError] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pagination, setPagination] = useState(null);
 
   useEffect(() => {
-    loadCategories();
-  }, []);
+    loadCategories(currentPage);
+  }, [currentPage]);
 
-  const loadCategories = async () => {
+  const loadCategories = async (page = 1) => {
     try {
-      const data = await getAll();
-      setCategories(data);
+      setLoading(true);
+
+      const result = await getAll(page);
+
+      setCategories(result.data);
+      setPagination(result.meta);
     } catch (error) {
       console.error("Error al obtener las categorías:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -453,6 +467,43 @@ function CategoryList() {
             onEdit={handleEdit}
             onDelete={handleDelete}
           />
+          {pagination && pagination.last_page > 1 && (
+            <Pagination className="mt-4">
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious
+                    href="#"
+                    onClick={(event) => {
+                      event.preventDefault();
+
+                      if (pagination.current_page > 1) {
+                        setCurrentPage(pagination.current_page - 1);
+                      }
+                    }}
+                  />
+                </PaginationItem>
+
+                <PaginationItem>
+                  <span className="px-4 text-sm">
+                    Página {pagination.current_page} de {pagination.last_page}
+                  </span>
+                </PaginationItem>
+
+                <PaginationItem>
+                  <PaginationNext
+                    href="#"
+                    onClick={(event) => {
+                      event.preventDefault();
+
+                      if (pagination.current_page < pagination.last_page) {
+                        setCurrentPage(pagination.current_page + 1);
+                      }
+                    }}
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
+          )}
         </CardContent>
       </Card>
     </div>

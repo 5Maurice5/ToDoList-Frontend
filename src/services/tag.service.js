@@ -1,7 +1,7 @@
 import { apiFetch } from "./api";
 
-export const getAll = async () => {
-  const response = await apiFetch("/tags");
+export const getAll = async (page = 1) => {
+  const response = await apiFetch(`/tags?page=${page}`);
 
   if (!response.ok) {
     throw new Error("Error al obtener los tags");
@@ -9,7 +9,7 @@ export const getAll = async () => {
 
   const result = await response.json();
 
-  return result.data;
+  return result;
 };
 
 export const create = async (tag) => {

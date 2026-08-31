@@ -34,6 +34,13 @@ import {
   DialogTrigger,
 } from "../ui/dialog";
 import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationPrevious,
+  PaginationNext,
+} from "../ui/pagination";
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -82,26 +89,57 @@ function TaskList() {
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [deleteError, setDeleteError] = useState("");
 
-  useEffect(() => {
-    loadData();
-  }, []);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pagination, setPagination] = useState(null);
 
-  const loadData = async () => {
-    try {
-      const [tasksData, categoriesData, tagsData] = await Promise.all([
-        getTasks(),
-        getCategories(),
-        getTags(),
-      ]);
+  const fetchAllPages = async (fetchFn) => {
+    let page = 1;
+    let allData = [];
+    let lastPage = 1;
 
-      setTasks(tasksData);
-      setCategories(categoriesData);
-      setTags(tagsData);
-    } catch (error) {
-      console.error("Error al cargar los datos:", error);
-    }
+    do {
+      const result = await fetchFn(page);
+      allData = [...allData, ...result.data];
+      lastPage = result.meta.last_page;
+      page++;
+    } while (page <= lastPage);
+
+    return allData;
   };
 
+  useEffect(() => {
+    const loadCategoriesAndTags = async () => {
+      try {
+        const [categoriesData, tagsData] = await Promise.all([
+          fetchAllPages(getCategories),
+          fetchAllPages(getTags),
+        ]);
+
+        setCategories(categoriesData);
+        setTags(tagsData);
+      } catch (error) {
+        console.error("Error al obtener categorías o tags:", error);
+      }
+    };
+
+    loadCategoriesAndTags();
+    loadData(currentPage);
+  }, [currentPage]);
+
+  const loadData = async (page = 1) => {
+    try {
+      setLoading(true);
+
+      const result = await getTasks(page);
+
+      setTasks(result.data);
+      setPagination(result.meta);
+    } catch (error) {
+      console.error("Error al obtener las tareas:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
   const handleTagChange = (tagId) => {
     setSelectedTags((currentTags) => {
       if (currentTags.includes(Number(tagId))) {
@@ -799,6 +837,43 @@ function TaskList() {
             onDelete={handleDelete}
             onView={handleView}
           />
+          {pagination && pagination.last_page > 1 && (
+            <Pagination className="mt-4">
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious
+                    href="#"
+                    onClick={(event) => {
+                      event.preventDefault();
+
+                      if (pagination.current_page > 1) {
+                        setCurrentPage(pagination.current_page - 1);
+                      }
+                    }}
+                  />
+                </PaginationItem>
+
+                <PaginationItem>
+                  <span className="px-4 text-sm">
+                    Página {pagination.current_page} de {pagination.last_page}
+                  </span>
+                </PaginationItem>
+
+                <PaginationItem>
+                  <PaginationNext
+                    href="#"
+                    onClick={(event) => {
+                      event.preventDefault();
+
+                      if (pagination.current_page < pagination.last_page) {
+                        setCurrentPage(pagination.current_page + 1);
+                      }
+                    }}
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
+          )}
         </CardContent>
       </Card>
     </div>
