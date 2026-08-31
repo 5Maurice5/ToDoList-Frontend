@@ -1,10 +1,10 @@
 import { apiFetch } from "./api";
 
 export const getAll = async () => {
-  const response = await apiFetch("/tasks");
+  const response = await apiFetch("/categories");
 
   if (!response.ok) {
-    throw new Error("Error al obtener las tareas");
+    throw new Error("Error al obtener las categorías");
   }
 
   const result = await response.json();
@@ -12,17 +12,17 @@ export const getAll = async () => {
   return result.data;
 };
 
-export const create = async (task) => {
-  const response = await apiFetch("/tasks", {
+export const create = async (category) => {
+  const response = await apiFetch("/categories", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify(task),
+    body: JSON.stringify(category),
   });
 
   if (!response.ok) {
-    throw new Error("Error al crear la tarea");
+    throw new Error("Error al crear la categoría");
   }
 
   const result = await response.json();
@@ -30,17 +30,17 @@ export const create = async (task) => {
   return result.data;
 };
 
-export const update = async (id, task) => {
-  const response = await apiFetch(`/tasks/${id}`, {
+export const update = async (id, category) => {
+  const response = await apiFetch(`/categories/${id}`, {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify(task),
+    body: JSON.stringify(category),
   });
 
   if (!response.ok) {
-    throw new Error("Error al actualizar la tarea");
+    throw new Error("Error al actualizar la categoría");
   }
 
   const result = await response.json();
@@ -48,13 +48,13 @@ export const update = async (id, task) => {
   return result.data;
 };
 
-export const deleteTask = async (id) => {
-  const response = await apiFetch(`/tasks/${id}`, {
+export const deleteCategory = async (id) => {
+  const response = await apiFetch(`/categories/${id}`, {
     method: "DELETE",
   });
 
   if (!response.ok) {
-    throw new Error("Error al eliminar la tarea");
+    throw new Error("Error al eliminar la categoría");
   }
 
   const result = await response.json();
@@ -63,10 +63,10 @@ export const deleteTask = async (id) => {
 };
 
 export const getOne = async (id) => {
-  const response = await apiFetch(`/tasks/${id}`);
+  const response = await apiFetch(`/categories/${id}`);
 
   if (!response.ok) {
-    throw new Error("Error al obtener la tarea");
+    throw new Error("Error al obtener la categoría");
   }
 
   const result = await response.json();

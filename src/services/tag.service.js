@@ -1,10 +1,10 @@
 import { apiFetch } from "./api";
 
 export const getAll = async () => {
-  const response = await apiFetch("/tasks");
+  const response = await apiFetch("/tags");
 
   if (!response.ok) {
-    throw new Error("Error al obtener las tareas");
+    throw new Error("Error al obtener los tags");
   }
 
   const result = await response.json();
@@ -12,17 +12,17 @@ export const getAll = async () => {
   return result.data;
 };
 
-export const create = async (task) => {
-  const response = await apiFetch("/tasks", {
+export const create = async (tag) => {
+  const response = await apiFetch("/tags", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify(task),
+    body: JSON.stringify(tag),
   });
 
   if (!response.ok) {
-    throw new Error("Error al crear la tarea");
+    throw new Error("Error al crear el tag");
   }
 
   const result = await response.json();
@@ -30,17 +30,17 @@ export const create = async (task) => {
   return result.data;
 };
 
-export const update = async (id, task) => {
-  const response = await apiFetch(`/tasks/${id}`, {
+export const update = async (id, tag) => {
+  const response = await apiFetch(`/tags/${id}`, {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify(task),
+    body: JSON.stringify(tag),
   });
 
   if (!response.ok) {
-    throw new Error("Error al actualizar la tarea");
+    throw new Error("Error al actualizar el tag");
   }
 
   const result = await response.json();
@@ -48,13 +48,13 @@ export const update = async (id, task) => {
   return result.data;
 };
 
-export const deleteTask = async (id) => {
-  const response = await apiFetch(`/tasks/${id}`, {
+export const deleteTag = async (id) => {
+  const response = await apiFetch(`/tags/${id}`, {
     method: "DELETE",
   });
 
   if (!response.ok) {
-    throw new Error("Error al eliminar la tarea");
+    throw new Error("Error al eliminar el tag");
   }
 
   const result = await response.json();
@@ -63,10 +63,10 @@ export const deleteTask = async (id) => {
 };
 
 export const getOne = async (id) => {
-  const response = await apiFetch(`/tasks/${id}`);
+  const response = await apiFetch(`/tags/${id}`);
 
   if (!response.ok) {
-    throw new Error("Error al obtener la tarea");
+    throw new Error("Error al obtener el tag");
   }
 
   const result = await response.json();
