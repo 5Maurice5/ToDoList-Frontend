@@ -366,7 +366,7 @@ function CategoryList() {
               </AlertDialogContent>
             </AlertDialog>
             <Dialog
-              open={!!viewingCategory || viewLoading}
+              open={Boolean(viewingCategory) || viewLoading}
               onOpenChange={(open) => {
                 if (!open && !viewLoading) {
                   setViewingCategory(null);
