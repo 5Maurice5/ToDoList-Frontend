@@ -156,12 +156,15 @@ function CategoryList() {
 
       await deleteCategory(deletingCategory.id);
 
-      await loadCategories();
+      setCategories((previousCategories) =>
+        previousCategories.filter(
+          (category) => category.id !== deletingCategory.id,
+        ),
+      );
 
       setDeletingCategory(null);
     } catch (error) {
       console.error("Error al eliminar la categoría:", error);
-
       setDeleteError("No se pudo eliminar la categoría.");
     } finally {
       setDeleteLoading(false);
