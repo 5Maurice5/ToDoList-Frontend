@@ -137,8 +137,6 @@ function TaskList() {
         tags: selectedTags,
       });
 
-      await loadData();
-
       setTitle("");
       setDescription("");
       setStatus(false);
@@ -215,8 +213,6 @@ function TaskList() {
         tags: editSelectedTags,
       });
 
-      await loadData();
-
       setEditingTask(null);
 
       setEditTitle("");
@@ -262,8 +258,6 @@ function TaskList() {
       setDeleteError("");
 
       await deleteTask(deletingTask.id);
-
-      await loadData();
 
       setDeletingTask(null);
     } catch (error) {
@@ -751,7 +745,7 @@ function TaskList() {
               </DialogContent>
             </Dialog>
             <AlertDialog
-              open={!!deletingTask}
+              open={Boolean(deletingTask)}
               onOpenChange={(open) => {
                 if (!open && !deleteLoading) {
                   setDeletingTask(null);
