@@ -47,7 +47,6 @@ import { Plus } from "lucide-react";
 
 function TagList() {
   const [tags, setTags] = useState([]);
-
   const [name, setName] = useState("");
   const [error, setError] = useState("");
   const [open, setOpen] = useState(false);
@@ -82,7 +81,9 @@ function TagList() {
   const handleCreate = async (event) => {
     event.preventDefault();
 
-    if (!name.trim()) {
+    const nameTrim = name.trim();
+
+    if (!nameTrim) {
       setError("El nombre es obligatorio.");
       return;
     }
@@ -91,11 +92,11 @@ function TagList() {
       setLoading(true);
       setError("");
 
-      await create({
-        name: name.trim(),
+      const newTag = await create({
+        name: nameTrim,
       });
 
-      await loadTags();
+      setTags((previousTags) => [...previousTags, newTag]);
 
       setName("");
       setOpen(false);
@@ -116,7 +117,9 @@ function TagList() {
   const handleUpdate = async (event) => {
     event.preventDefault();
 
-    if (!editName.trim()) {
+    const editNameTrim = editName.trim();
+
+    if (!editNameTrim) {
       setEditError("El nombre es obligatorio.");
       return;
     }
@@ -125,11 +128,15 @@ function TagList() {
       setEditLoading(true);
       setEditError("");
 
-      await update(editingTag.id, {
-        name: editName.trim(),
+      const updatedTag = await update(editingTag.id, {
+        name: editNameTrim,
       });
 
-      await loadTags();
+      setTags((previousTags) =>
+        previousTags.map((tag) =>
+          tag.id === updatedTag.id ? updatedTag : tag,
+        ),
+      );
 
       setEditingTag(null);
       setEditName("");
@@ -166,7 +173,9 @@ function TagList() {
 
       await deleteTag(deletingTag.id);
 
-      await loadTags();
+      setTags((previousTags) =>
+        previousTags.filter((tag) => tag.id !== deletingTag.id),
+      );
 
       setDeletingTag(null);
     } catch (error) {
@@ -281,7 +290,6 @@ function TagList() {
       </Card>
 
       {/* EDITAR */}
-
       <Dialog
         open={!!editingTag}
         onOpenChange={(open) => {
@@ -341,7 +349,6 @@ function TagList() {
       </Dialog>
 
       {/* ELIMINAR */}
-
       <AlertDialog
         open={!!deletingTag}
         onOpenChange={(open) => {
@@ -383,7 +390,6 @@ function TagList() {
       </AlertDialog>
 
       {/* VER */}
-
       <Dialog
         open={!!viewingTag || viewLoading}
         onOpenChange={(open) => {
