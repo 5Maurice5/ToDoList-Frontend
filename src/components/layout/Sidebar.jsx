@@ -21,11 +21,6 @@ const items = [
     icon: CheckSquare,
   },
   {
-    title: "Usuarios",
-    url: "/users",
-    icon: Users,
-  },
-  {
     title: "Categorías",
     url: "/categories",
     icon: Folder,

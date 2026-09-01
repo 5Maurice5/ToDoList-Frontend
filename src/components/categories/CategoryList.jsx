@@ -4,18 +4,16 @@ import CategoryTable from "./CategoryTable";
 
 function CategoryList() {
   const [categories, setCategories] = useState([]);
+  const loadCategories = async () => {
+    try {
+      const data = await getAll();
 
+      setCategories(data);
+    } catch (error) {
+      console.error("Error al obtener las categorías:", error);
+    }
+  };
   useEffect(() => {
-    const loadCategories = async () => {
-      try {
-        const data = await getAll();
-
-        setCategories(data);
-      } catch (error) {
-        console.error("Error al obtener las categorías:", error);
-      }
-    };
-
     loadCategories();
   }, []);
 
