@@ -29,6 +29,7 @@ import {
 } from "../ui/dialog";
 
 import { Input } from "../ui/input";
+
 import { Label } from "../ui/label";
 
 import { Plus } from "lucide-react";
@@ -37,17 +38,23 @@ function TaskList() {
   const [tasks, setTasks] = useState([]);
 
   const [categories, setCategories] = useState([]);
+
   const [tags, setTags] = useState([]);
 
   const [title, setTitle] = useState("");
+
   const [description, setDescription] = useState("");
+
   const [status, setStatus] = useState(false);
+
   const [categoryId, setCategoryId] = useState("");
+
   const [selectedTags, setSelectedTags] = useState([]);
 
   const [open, setOpen] = useState(false);
 
   const [loading, setLoading] = useState(false);
+
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -71,19 +78,24 @@ function TaskList() {
   };
 
   const handleTagChange = (tagId) => {
+    const numericTagId = Number(tagId);
+
     setSelectedTags((currentTags) => {
-      if (currentTags.includes(Number(tagId))) {
-        return currentTags.filter((id) => id !== Number(tagId));
+      if (currentTags.includes(numericTagId)) {
+        return currentTags.filter((id) => id !== numericTagId);
       }
 
-      return [...currentTags, Number(tagId)];
+      return [...currentTags, numericTagId];
     });
   };
 
   const handleCreate = async (event) => {
     event.preventDefault();
 
-    if (!title.trim()) {
+    const titleTrim = title.trim();
+    const descriptionTrim = description.trim();
+
+    if (!titleTrim) {
       setError("El título es obligatorio.");
       return;
     }
@@ -97,22 +109,21 @@ function TaskList() {
       setLoading(true);
       setError("");
 
-      await create({
-        title: title.trim(),
-        description: description.trim(),
+      const newTask = await create({
+        title: titleTrim,
+        description: descriptionTrim,
         status,
         category_id: Number(categoryId),
         tags: selectedTags,
       });
 
-      await loadData();
+      setTasks((previousTasks) => [...previousTasks, newTask]);
 
       setTitle("");
       setDescription("");
       setStatus(false);
       setCategoryId("");
       setSelectedTags([]);
-
       setOpen(false);
     } catch (error) {
       console.error("Error al crear la tarea:", error);
@@ -156,8 +167,6 @@ function TaskList() {
               </CardDescription>
             </div>
 
-            {/* BOTÓN NUEVA TAREA */}
-
             <Dialog open={open} onOpenChange={handleOpenChange}>
               <DialogTrigger render={<Button />}>
                 <Plus className="mr-2 h-4 w-4" />
@@ -175,8 +184,6 @@ function TaskList() {
                   </DialogHeader>
 
                   <div className="grid gap-5 py-6">
-                    {/* TÍTULO */}
-
                     <div className="grid gap-2">
                       <Label htmlFor="title">Título</Label>
 
@@ -195,8 +202,6 @@ function TaskList() {
                       />
                     </div>
 
-                    {/* DESCRIPCIÓN */}
-
                     <div className="grid gap-2">
                       <Label htmlFor="description">Descripción</Label>
 
@@ -208,8 +213,6 @@ function TaskList() {
                         className="min-h-[100px] rounded-md border bg-background px-3 py-2 text-sm"
                       />
                     </div>
-
-                    {/* CATEGORÍA */}
 
                     <div className="grid gap-2">
                       <Label htmlFor="category">Categoría</Label>
@@ -235,8 +238,6 @@ function TaskList() {
                         ))}
                       </select>
                     </div>
-
-                    {/* TAGS */}
 
                     <div className="grid gap-2">
                       <Label>Etiquetas</Label>
@@ -267,8 +268,6 @@ function TaskList() {
                       </div>
                     </div>
 
-                    {/* ESTADO */}
-
                     <div className="flex items-center gap-2">
                       <input
                         id="status"
@@ -279,8 +278,6 @@ function TaskList() {
 
                       <Label htmlFor="status">Tarea completada</Label>
                     </div>
-
-                    {/* ERROR */}
 
                     {error && (
                       <p className="text-sm text-destructive">{error}</p>
@@ -308,12 +305,7 @@ function TaskList() {
         </CardHeader>
 
         <CardContent>
-          <TaskTable
-            tasks={tasks}
-            onEdit={() => {}}
-            onDelete={() => {}}
-            onView={() => {}}
-          />
+          <TaskTable tasks={tasks} />
         </CardContent>
       </Card>
     </div>
