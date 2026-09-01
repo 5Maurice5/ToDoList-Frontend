@@ -405,7 +405,7 @@ function TaskList() {
               </DialogContent>
             </Dialog>
             <Dialog
-              open={!!editingTask}
+              open={Boolean(editingTask)}
               onOpenChange={(open) => {
                 if (!open && !editLoading) {
                   setEditingTask(null);
@@ -558,7 +558,7 @@ function TaskList() {
               </DialogContent>
             </Dialog>
             <Dialog
-              open={!!viewingTask || viewLoading}
+              open={Boolean(viewingTask) || viewLoading}
               onOpenChange={(open) => {
                 if (!open && !viewLoading) {
                   setViewingTask(null);
