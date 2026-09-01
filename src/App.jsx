@@ -1,6 +1,17 @@
-const App = () => {
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+
+import DashboardLayout from "./components/layout/DashboardLayout";
+
+function App() {
   return (
-    <><h1>Hola mundo</h1></>
-  )
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<DashboardLayout />}>
+          <Route index element={<Navigate to="/tasks" replace />} />
+        </Route>
+      </Routes>
+    </BrowserRouter>
+  );
 }
-export default App
+
+export default App;
