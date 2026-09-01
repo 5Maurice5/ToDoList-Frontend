@@ -52,7 +52,9 @@ function CategoryList() {
   const handleCreate = async (event) => {
     event.preventDefault();
 
-    if (!name.trim()) {
+    const nameTrim = name.trim();
+
+    if (!nameTrim) {
       setError("El nombre es obligatorio.");
       return;
     }
@@ -61,17 +63,19 @@ function CategoryList() {
       setLoading(true);
       setError("");
 
-      await create({
-        name: name.trim(),
+      const newCategory = await create({
+        name: nameTrim,
       });
 
-      await loadCategories();
+      setCategories((previousCategories) => [
+        ...previousCategories,
+        newCategory,
+      ]);
 
       setName("");
       setOpen(false);
     } catch (error) {
       console.error("Error al crear la categoría:", error);
-
       setError("No se pudo crear la categoría.");
     } finally {
       setLoading(false);
