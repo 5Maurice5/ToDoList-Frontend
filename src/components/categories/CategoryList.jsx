@@ -89,7 +89,9 @@ function CategoryList() {
   const handleUpdate = async (event) => {
     event.preventDefault();
 
-    if (!editName.trim()) {
+    const editNameTrim = editName.trim();
+
+    if (!editNameTrim) {
       setEditError("El nombre es obligatorio.");
       return;
     }
@@ -98,17 +100,20 @@ function CategoryList() {
       setEditLoading(true);
       setEditError("");
 
-      await update(editingCategory.id, {
-        name: editName.trim(),
+      const updatedCategory = await update(editingCategory.id, {
+        name: editNameTrim,
       });
 
-      await loadCategories();
+      setCategories((previousCategories) =>
+        previousCategories.map((category) =>
+          category.id === updatedCategory.id ? updatedCategory : category,
+        ),
+      );
 
       setEditingCategory(null);
       setEditName("");
     } catch (error) {
       console.error("Error al actualizar la categoría:", error);
-
       setEditError("No se pudo actualizar la categoría.");
     } finally {
       setEditLoading(false);
