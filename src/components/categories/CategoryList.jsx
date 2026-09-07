@@ -141,6 +141,35 @@ function CategoryList() {
       setError("");
     }
   };
+  const handleDelete = (category) => {
+    setDeletingCategory(category);
+    setDeleteError("");
+  };
+  const confirmDelete = async () => {
+    if (!deletingCategory) {
+      return;
+    }
+
+    try {
+      setDeleteLoading(true);
+      setDeleteError("");
+
+      await deleteCategory(deletingCategory.id);
+
+      setCategories((previousCategories) =>
+        previousCategories.filter(
+          (category) => category.id !== deletingCategory.id,
+        ),
+      );
+
+      setDeletingCategory(null);
+    } catch (error) {
+      console.error("Error al eliminar la categoría:", error);
+      setDeleteError("No se pudo eliminar la categoría.");
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
 
   return (
     <div className="space-y-6">
