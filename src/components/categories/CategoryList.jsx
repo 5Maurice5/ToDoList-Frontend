@@ -1,8 +1,20 @@
 import { useEffect, useState } from "react";
 
-import { getAll, create, update } from "../../services/category.service";
+import {
+  getAll,
+  getOne,
+  create,
+  update,
+  deleteCategory,
+} from "../../services/category.service";
 import CategoryTable from "./CategoryTable";
-
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationPrevious,
+  PaginationNext,
+} from "../ui/pagination";
 import {
   Card,
   CardContent,
@@ -12,6 +24,16 @@ import {
 } from "../ui/card";
 
 import { Button } from "../ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "../ui/alert-dialog";
 
 import {
   Dialog,
@@ -30,23 +52,10 @@ import { Plus } from "lucide-react";
 
 function CategoryList() {
   const [categories, setCategories] = useState([]);
-
-  const [name, setName] = useState("");
-  const [error, setError] = useState("");
-  const [open, setOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [editingCategory, setEditingCategory] = useState(null);
-  const [editName, setEditName] = useState("");
-  const [editError, setEditError] = useState("");
-  const [editLoading, setEditLoading] = useState(false);
-
-  useEffect(() => {
-    loadCategories();
-  }, []);
-
   const loadCategories = async () => {
     try {
       const data = await getAll();
+
       setCategories(data);
     } catch (error) {
       console.error("Error al obtener las categorías:", error);
@@ -56,7 +65,9 @@ function CategoryList() {
   const handleCreate = async (event) => {
     event.preventDefault();
 
-    if (!name.trim()) {
+    const nameTrim = name.trim();
+
+    if (!nameTrim) {
       setError("El nombre es obligatorio.");
       return;
     }
@@ -65,17 +76,19 @@ function CategoryList() {
       setLoading(true);
       setError("");
 
-      await create({
-        name: name.trim(),
+      const newCategory = await create({
+        name: nameTrim,
       });
 
-      await loadCategories();
+      setCategories((previousCategories) => [
+        ...previousCategories,
+        newCategory,
+      ]);
 
       setName("");
       setOpen(false);
     } catch (error) {
       console.error("Error al crear la categoría:", error);
-
       setError("No se pudo crear la categoría.");
     } finally {
       setLoading(false);
@@ -267,11 +280,170 @@ function CategoryList() {
                 </form>
               </DialogContent>
             </Dialog>
+            <AlertDialog
+              open={!!deletingCategory}
+              onOpenChange={(open) => {
+                if (!open && !deleteLoading) {
+                  setDeletingCategory(null);
+                  setDeleteError("");
+                }
+              }}
+            >
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>¿Eliminar categoría?</AlertDialogTitle>
+
+                  <AlertDialogDescription>
+                    ¿Estás seguro de que deseas eliminar la categoría{" "}
+                    <strong>{deletingCategory?.name}</strong>? Esta acción no se
+                    puede deshacer.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+
+                {deleteError && (
+                  <p className="text-sm text-destructive">{deleteError}</p>
+                )}
+
+                <AlertDialogFooter>
+                  <AlertDialogCancel disabled={deleteLoading}>
+                    Cancelar
+                  </AlertDialogCancel>
+
+                  <AlertDialogAction
+                    onClick={confirmDelete}
+                    disabled={deleteLoading}
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  >
+                    {deleteLoading ? "Eliminando..." : "Eliminar"}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+            <Dialog
+              open={!!viewingCategory || viewLoading}
+              onOpenChange={(open) => {
+                if (!open && !viewLoading) {
+                  setViewingCategory(null);
+                  setViewError("");
+                }
+              }}
+            >
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Detalle de categoría</DialogTitle>
+
+                  <DialogDescription>
+                    Información de la categoría seleccionada.
+                  </DialogDescription>
+                </DialogHeader>
+
+                {viewLoading && (
+                  <div className="py-8 text-center text-muted-foreground">
+                    Cargando información...
+                  </div>
+                )}
+
+                {viewError && (
+                  <div className="py-4 text-sm text-destructive">
+                    {viewError}
+                  </div>
+                )}
+
+                {viewingCategory && !viewLoading && (
+                  <div className="space-y-5 py-4">
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium text-muted-foreground">
+                        Nombre
+                      </p>
+
+                      <p className="text-base font-semibold">
+                        {viewingCategory.name}
+                      </p>
+                    </div>
+
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium text-muted-foreground">
+                        Creado
+                      </p>
+
+                      <p className="text-sm">
+                        {new Date(viewingCategory.created_at).toLocaleString(
+                          "es-ES",
+                        )}
+                      </p>
+                    </div>
+
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium text-muted-foreground">
+                        Actualizado
+                      </p>
+
+                      <p className="text-sm">
+                        {new Date(viewingCategory.updated_at).toLocaleString(
+                          "es-ES",
+                        )}
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                <DialogFooter>
+                  <Button
+                    variant="outline"
+                    onClick={() => setViewingCategory(null)}
+                  >
+                    Cerrar
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
           </div>
         </CardHeader>
 
         <CardContent>
-          <CategoryTable categories={categories} onEdit={handleEdit} />
+          <CategoryTable
+            categories={categories}
+            onView={handleView}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+          />
+          {pagination && pagination.last_page > 1 && (
+            <Pagination className="mt-4">
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious
+                    href="#"
+                    onClick={(event) => {
+                      event.preventDefault();
+
+                      if (pagination.current_page > 1) {
+                        setCurrentPage(pagination.current_page - 1);
+                      }
+                    }}
+                  />
+                </PaginationItem>
+
+                <PaginationItem>
+                  <span className="px-4 text-sm">
+                    Página {pagination.current_page} de {pagination.last_page}
+                  </span>
+                </PaginationItem>
+
+                <PaginationItem>
+                  <PaginationNext
+                    href="#"
+                    onClick={(event) => {
+                      event.preventDefault();
+
+                      if (pagination.current_page < pagination.last_page) {
+                        setCurrentPage(pagination.current_page + 1);
+                      }
+                    }}
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
+          )}
         </CardContent>
       </Card>
     </div>
