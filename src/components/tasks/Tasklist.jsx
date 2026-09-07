@@ -191,8 +191,6 @@ function TaskList() {
         tags: selectedTags,
       });
 
-      setTasks((previousTasks) => [...previousTasks, newTask]);
-
       setTitle("");
       setDescription("");
       setStatus(false);
@@ -295,9 +293,6 @@ function TaskList() {
         category_id: Number(editCategoryId),
         tags: editSelectedTags,
       });
-
-      // Recargar la página actual
-      await loadData(currentPage);
 
       setEditingTask(null);
       setEditTitle("");
