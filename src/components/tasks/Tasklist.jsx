@@ -9,7 +9,6 @@ import {
 } from "../../services/tarea.service";
 
 import { getAll as getCategories } from "../../services/category.service";
-
 import { getAll as getTags } from "../../services/tag.service";
 
 import TaskTable from "./TaskTable";
@@ -33,6 +32,15 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "../ui/dialog";
+
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationPrevious,
+  PaginationNext,
+} from "../ui/pagination";
+
 import {
   AlertDialog,
   AlertDialogAction,
@@ -43,28 +51,34 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "../ui/alert-dialog";
-import { Input } from "../ui/input";
-import { Label } from "../ui/label";
 
+import { Input } from "../ui/input";
+
+import { Label } from "../ui/label";
 import { Plus } from "lucide-react";
 
 function TaskList() {
   const [tasks, setTasks] = useState([]);
-
   const [categories, setCategories] = useState([]);
+
   const [tags, setTags] = useState([]);
 
+  // Crear tarea
   const [title, setTitle] = useState("");
+
   const [description, setDescription] = useState("");
+
   const [status, setStatus] = useState(false);
+
   const [categoryId, setCategoryId] = useState("");
+
   const [selectedTags, setSelectedTags] = useState([]);
-
   const [open, setOpen] = useState(false);
-
   const [loading, setLoading] = useState(false);
+
   const [error, setError] = useState("");
 
+  // Editar tarea
   const [editingTask, setEditingTask] = useState(null);
   const [editTitle, setEditTitle] = useState("");
   const [editDescription, setEditDescription] = useState("");
@@ -74,48 +88,88 @@ function TaskList() {
   const [editError, setEditError] = useState("");
   const [editLoading, setEditLoading] = useState(false);
 
+  // Ver tarea
   const [viewingTask, setViewingTask] = useState(null);
   const [viewLoading, setViewLoading] = useState(false);
   const [viewError, setViewError] = useState("");
 
+  // Eliminar tarea
   const [deletingTask, setDeletingTask] = useState(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [deleteError, setDeleteError] = useState("");
 
-  useEffect(() => {
-    loadData();
-  }, []);
+  // Paginación
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pagination, setPagination] = useState(null);
 
-  const loadData = async () => {
-    try {
-      const [tasksData, categoriesData, tagsData] = await Promise.all([
-        getTasks(),
-        getCategories(),
-        getTags(),
-      ]);
+  const fetchAllPages = async (fetchFn) => {
+    let page = 1;
+    let allData = [];
+    let lastPage = 1;
 
-      setTasks(tasksData);
-      setCategories(categoriesData);
-      setTags(tagsData);
-    } catch (error) {
-      console.error("Error al cargar los datos:", error);
-    }
+    do {
+      const result = await fetchFn(page);
+
+      allData = [...allData, ...result.data];
+
+      lastPage = result.meta.last_page;
+      page++;
+    } while (page <= lastPage);
+
+    return allData;
   };
 
+  /*
+   * Cargar categorías y tags UNA SOLA VEZ.
+   */
+  useEffect(() => {
+    const loadCategoriesAndTags = async () => {
+      try {
+        const [categoriesData, tagsData] = await Promise.all([
+          fetchAllPages(getCategories),
+          fetchAllPages(getTags),
+        ]);
+
+        setCategories(categoriesData);
+        setTags(tagsData);
+      } catch (error) {
+        console.error("Error al obtener categorías o tags:", error);
+      }
+    };
+
+    loadCategoriesAndTags();
+  }, []);
+
+  useEffect(() => {
+    loadData(currentPage);
+  }, [currentPage]);
+
+  const loadData = async (page = 1) => {
+    try {
+      setLoading(true);
+
   const handleTagChange = (tagId) => {
+    const numericTagId = Number(tagId);
+
     setSelectedTags((currentTags) => {
-      if (currentTags.includes(Number(tagId))) {
-        return currentTags.filter((id) => id !== Number(tagId));
+      if (currentTags.includes(numericTagId)) {
+        return currentTags.filter((id) => id !== numericTagId);
       }
 
-      return [...currentTags, Number(tagId)];
+      return [...currentTags, numericTagId];
     });
   };
 
+  /*
+   * Crear tarea
+   */
   const handleCreate = async (event) => {
     event.preventDefault();
 
-    if (!title.trim()) {
+    const titleTrim = title.trim();
+    const descriptionTrim = description.trim();
+
+    if (!titleTrim) {
       setError("El título es obligatorio.");
       return;
     }
@@ -129,9 +183,9 @@ function TaskList() {
       setLoading(true);
       setError("");
 
-      await create({
-        title: title.trim(),
-        description: description.trim(),
+      const newTask = await create({
+        title: titleTrim,
+        description: descriptionTrim,
         status,
         category_id: Number(categoryId),
         tags: selectedTags,
@@ -142,7 +196,6 @@ function TaskList() {
       setStatus(false);
       setCategoryId("");
       setSelectedTags([]);
-
       setOpen(false);
     } catch (error) {
       console.error("Error al crear la tarea:", error);
@@ -152,6 +205,9 @@ function TaskList() {
     }
   };
 
+  /*
+   * Abrir/cerrar diálogo de creación
+   */
   const handleOpenChange = (value) => {
     setOpen(value);
 
@@ -165,6 +221,24 @@ function TaskList() {
     }
   };
 
+  /*
+   * Seleccionar/deseleccionar tag al crear
+   */
+  const handleTagChange = (tagId) => {
+    setSelectedTags((currentTags) => {
+      const id = Number(tagId);
+
+      if (currentTags.includes(id)) {
+        return currentTags.filter((tag) => tag !== id);
+      }
+
+      return [...currentTags, id];
+    });
+  };
+
+  /*
+   * Abrir edición
+   */
   const handleEdit = (task) => {
     setEditingTask(task);
 
@@ -172,11 +246,14 @@ function TaskList() {
     setEditDescription(task.description ?? "");
     setEditStatus(task.status);
     setEditCategoryId(task.category?.id?.toString() ?? "");
-
     setEditSelectedTags(task.tags?.map((tag) => tag.id) ?? []);
 
     setEditError("");
   };
+
+  /*
+   * Seleccionar/deseleccionar tag al editar
+   */
   const handleEditTagChange = (tagId) => {
     setEditSelectedTags((currentTags) => {
       const id = Number(tagId);
@@ -188,6 +265,10 @@ function TaskList() {
       return [...currentTags, id];
     });
   };
+
+  /*
+   * Actualizar tarea
+   */
   const handleUpdate = async (event) => {
     event.preventDefault();
 
@@ -214,7 +295,6 @@ function TaskList() {
       });
 
       setEditingTask(null);
-
       setEditTitle("");
       setEditDescription("");
       setEditStatus(false);
@@ -222,12 +302,15 @@ function TaskList() {
       setEditSelectedTags([]);
     } catch (error) {
       console.error("Error al actualizar la tarea:", error);
-
       setEditError("No se pudo actualizar la tarea.");
     } finally {
       setEditLoading(false);
     }
   };
+
+  /*
+   * Ver detalle de tarea
+   */
   const handleView = async (task) => {
     try {
       setViewLoading(true);
@@ -238,16 +321,23 @@ function TaskList() {
       setViewingTask(data);
     } catch (error) {
       console.error("Error al obtener la tarea:", error);
-
       setViewError("No se pudo obtener la información de la tarea.");
     } finally {
       setViewLoading(false);
     }
   };
+
+  /*
+   * Preparar eliminación
+   */
   const handleDelete = (task) => {
     setDeletingTask(task);
     setDeleteError("");
   };
+
+  /*
+   * Confirmar eliminación
+   */
   const confirmDelete = async () => {
     if (!deletingTask) {
       return;
@@ -262,7 +352,6 @@ function TaskList() {
       setDeletingTask(null);
     } catch (error) {
       console.error("Error al eliminar la tarea:", error);
-
       setDeleteError("No se pudo eliminar la tarea.");
     } finally {
       setDeleteLoading(false);
@@ -290,8 +379,6 @@ function TaskList() {
               </CardDescription>
             </div>
 
-            {/* BOTÓN NUEVA TAREA */}
-
             <Dialog open={open} onOpenChange={handleOpenChange}>
               <DialogTrigger render={<Button />}>
                 <Plus className="mr-2 h-4 w-4" />
@@ -309,8 +396,6 @@ function TaskList() {
                   </DialogHeader>
 
                   <div className="grid gap-5 py-6">
-                    {/* TÍTULO */}
-
                     <div className="grid gap-2">
                       <Label htmlFor="title">Título</Label>
 
@@ -329,8 +414,6 @@ function TaskList() {
                       />
                     </div>
 
-                    {/* DESCRIPCIÓN */}
-
                     <div className="grid gap-2">
                       <Label htmlFor="description">Descripción</Label>
 
@@ -342,8 +425,6 @@ function TaskList() {
                         className="min-h-[100px] rounded-md border bg-background px-3 py-2 text-sm"
                       />
                     </div>
-
-                    {/* CATEGORÍA */}
 
                     <div className="grid gap-2">
                       <Label htmlFor="category">Categoría</Label>
@@ -369,8 +450,6 @@ function TaskList() {
                         ))}
                       </select>
                     </div>
-
-                    {/* TAGS */}
 
                     <div className="grid gap-2">
                       <Label>Etiquetas</Label>
@@ -401,8 +480,6 @@ function TaskList() {
                       </div>
                     </div>
 
-                    {/* ESTADO */}
-
                     <div className="flex items-center gap-2">
                       <input
                         id="status"
@@ -413,8 +490,6 @@ function TaskList() {
 
                       <Label htmlFor="status">Tarea completada</Label>
                     </div>
-
-                    {/* ERROR */}
 
                     {error && (
                       <p className="text-sm text-destructive">{error}</p>
@@ -438,8 +513,10 @@ function TaskList() {
                 </form>
               </DialogContent>
             </Dialog>
+
+            {/* EDITAR TAREA */}
             <Dialog
-              open={!!editingTask}
+              open={Boolean(editingTask)}
               onOpenChange={(open) => {
                 if (!open && !editLoading) {
                   setEditingTask(null);
@@ -459,7 +536,6 @@ function TaskList() {
 
                   <div className="grid gap-5 py-6">
                     {/* TÍTULO */}
-
                     <div className="grid gap-2">
                       <Label htmlFor="edit-title">Título</Label>
 
@@ -479,7 +555,6 @@ function TaskList() {
                     </div>
 
                     {/* DESCRIPCIÓN */}
-
                     <div className="grid gap-2">
                       <Label htmlFor="edit-description">Descripción</Label>
 
@@ -495,7 +570,6 @@ function TaskList() {
                     </div>
 
                     {/* CATEGORÍA */}
-
                     <div className="grid gap-2">
                       <Label htmlFor="edit-category">Categoría</Label>
 
@@ -522,7 +596,6 @@ function TaskList() {
                     </div>
 
                     {/* TAGS */}
-
                     <div className="grid gap-2">
                       <Label>Etiquetas</Label>
 
@@ -553,7 +626,6 @@ function TaskList() {
                     </div>
 
                     {/* ESTADO */}
-
                     <div className="flex items-center gap-2">
                       <input
                         id="edit-status"
@@ -568,7 +640,6 @@ function TaskList() {
                     </div>
 
                     {/* ERROR */}
-
                     {editError && (
                       <p className="text-sm text-destructive">{editError}</p>
                     )}
@@ -591,8 +662,10 @@ function TaskList() {
                 </form>
               </DialogContent>
             </Dialog>
+
+            {/* VER TAREA */}
             <Dialog
-              open={!!viewingTask || viewLoading}
+              open={Boolean(viewingTask) || viewLoading}
               onOpenChange={(open) => {
                 if (!open && !viewLoading) {
                   setViewingTask(null);
@@ -624,7 +697,6 @@ function TaskList() {
                 {viewingTask && !viewLoading && (
                   <div className="space-y-5 py-4">
                     {/* ID */}
-
                     <div className="space-y-1">
                       <p className="text-sm font-medium text-muted-foreground">
                         ID
@@ -634,7 +706,6 @@ function TaskList() {
                     </div>
 
                     {/* TÍTULO */}
-
                     <div className="space-y-1">
                       <p className="text-sm font-medium text-muted-foreground">
                         Título
@@ -646,7 +717,6 @@ function TaskList() {
                     </div>
 
                     {/* DESCRIPCIÓN */}
-
                     <div className="space-y-1">
                       <p className="text-sm font-medium text-muted-foreground">
                         Descripción
@@ -658,7 +728,6 @@ function TaskList() {
                     </div>
 
                     {/* ESTADO */}
-
                     <div className="space-y-1">
                       <p className="text-sm font-medium text-muted-foreground">
                         Estado
@@ -670,7 +739,6 @@ function TaskList() {
                     </div>
 
                     {/* CATEGORÍA */}
-
                     <div className="space-y-1">
                       <p className="text-sm font-medium text-muted-foreground">
                         Categoría
@@ -682,7 +750,6 @@ function TaskList() {
                     </div>
 
                     {/* TAGS */}
-
                     <div className="space-y-2">
                       <p className="text-sm font-medium text-muted-foreground">
                         Etiquetas
@@ -705,7 +772,6 @@ function TaskList() {
                     </div>
 
                     {/* FECHA CREACIÓN */}
-
                     <div className="space-y-1">
                       <p className="text-sm font-medium text-muted-foreground">
                         Creado
@@ -719,7 +785,6 @@ function TaskList() {
                     </div>
 
                     {/* FECHA ACTUALIZACIÓN */}
-
                     <div className="space-y-1">
                       <p className="text-sm font-medium text-muted-foreground">
                         Actualizado
@@ -744,6 +809,8 @@ function TaskList() {
                 </DialogFooter>
               </DialogContent>
             </Dialog>
+
+            {/* ELIMINAR TAREA */}
             <AlertDialog
               open={Boolean(deletingTask)}
               onOpenChange={(open) => {
@@ -787,12 +854,7 @@ function TaskList() {
         </CardHeader>
 
         <CardContent>
-          <TaskTable
-            tasks={tasks}
-            onEdit={handleEdit}
-            onDelete={handleDelete}
-            onView={handleView}
-          />
+          <TaskTable tasks={tasks} />
         </CardContent>
       </Card>
     </div>

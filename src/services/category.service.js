@@ -1,7 +1,7 @@
-const API_URL = import.meta.env.VITE_API_URL;
+import { apiFetch } from "./api";
 
-export const getAll = async () => {
-  const response = await fetch(`${API_URL}/categories`);
+export const getAll = async (page = 1) => {
+  const response = await apiFetch(`/categories?page=${page}`);
 
   if (!response.ok) {
     throw new Error("Error al obtener las categorías");
@@ -9,11 +9,11 @@ export const getAll = async () => {
 
   const result = await response.json();
 
-  return result.data;
+  return result;
 };
 
 export const create = async (category) => {
-  const response = await fetch(`${API_URL}/categories`, {
+  const response = await apiFetch("/categories", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -29,8 +29,9 @@ export const create = async (category) => {
 
   return result.data;
 };
+
 export const update = async (id, category) => {
-  const response = await fetch(`${API_URL}/categories/${id}`, {
+  const response = await apiFetch(`/categories/${id}`, {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
@@ -48,7 +49,7 @@ export const update = async (id, category) => {
 };
 
 export const deleteCategory = async (id) => {
-  const response = await fetch(`${API_URL}/categories/${id}`, {
+  const response = await apiFetch(`/categories/${id}`, {
     method: "DELETE",
   });
 
@@ -62,7 +63,7 @@ export const deleteCategory = async (id) => {
 };
 
 export const getOne = async (id) => {
-  const response = await fetch(`${API_URL}/categories/${id}`);
+  const response = await apiFetch(`/categories/${id}`);
 
   if (!response.ok) {
     throw new Error("Error al obtener la categoría");
