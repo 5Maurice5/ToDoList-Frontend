@@ -9,17 +9,9 @@ import {
 
 import { Button } from "../ui/button";
 
-import { Pencil, Trash2 } from "lucide-react";
+import { Pencil, Trash2, Eye } from "lucide-react";
 
-function CategoryTable({ categories }) {
-  const handleEdit = (category) => {
-    console.log("Editar categoría:", category);
-  };
-
-  const handleDelete = (category) => {
-    console.log("Eliminar categoría:", category);
-  };
-
+function CategoryTable({ categories, onEdit, onDelete, onView }) {
   return (
     <div className="rounded-md border">
       <Table>
