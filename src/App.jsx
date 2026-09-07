@@ -1,18 +1,16 @@
-import { useEffect } from "react";
-import { getAllTask } from "./services/tarea.service";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+
+import DashboardLayout from "./components/layout/DashboardLayout";
 
 function App() {
-  useEffect(() => {
-    loadTasks();
-  }, []);
-
-  const loadTasks = async () => {
-    try {
-      const tasks = await getAllTask();
-    } catch (error) {
-      console.error("Error al obtener las tareas: ", error);
-    }
-  };
-  return <div>Ticket 6 - Consumo de API</div>;
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<DashboardLayout />}>
+          <Route index element={<Navigate to="/tasks" replace />} />
+        </Route>
+      </Routes>
+    </BrowserRouter>
+  );
 }
 export default App;

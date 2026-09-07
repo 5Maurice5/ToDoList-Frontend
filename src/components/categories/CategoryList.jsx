@@ -52,155 +52,18 @@ import { Plus } from "lucide-react";
 
 function CategoryList() {
   const [categories, setCategories] = useState([]);
-
-  const [name, setName] = useState("");
-  const [error, setError] = useState("");
-  const [open, setOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [editingCategory, setEditingCategory] = useState(null);
-  const [editName, setEditName] = useState("");
-  const [editError, setEditError] = useState("");
-  const [editLoading, setEditLoading] = useState(false);
-  const [deletingCategory, setDeletingCategory] = useState(null);
-  const [deleteLoading, setDeleteLoading] = useState(false);
-  const [deleteError, setDeleteError] = useState("");
-  const [viewingCategory, setViewingCategory] = useState(null);
-  const [viewLoading, setViewLoading] = useState(false);
-  const [viewError, setViewError] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pagination, setPagination] = useState(null);
-
-  useEffect(() => {
-    loadCategories(currentPage);
-  }, [currentPage]);
-
-  const loadCategories = async (page = 1) => {
+  const loadCategories = async () => {
     try {
-      setLoading(true);
+      const data = await getAll();
 
-      const result = await getAll(page);
-
-      setCategories(result.data);
-      setPagination(result.meta);
+      setCategories(data);
     } catch (error) {
       console.error("Error al obtener las categorías:", error);
-    } finally {
-      setLoading(false);
     }
   };
-
-  const handleCreate = async (event) => {
-    event.preventDefault();
-
-    if (!name.trim()) {
-      setError("El nombre es obligatorio.");
-      return;
-    }
-
-    try {
-      setLoading(true);
-      setError("");
-
-      await create({
-        name: name.trim(),
-      });
-
-      await loadCategories();
-
-      setName("");
-      setOpen(false);
-    } catch (error) {
-      console.error("Error al crear la categoría:", error);
-
-      setError("No se pudo crear la categoría.");
-    } finally {
-      setLoading(false);
-    }
-  };
-  const handleEdit = (category) => {
-    setEditingCategory(category);
-    setEditName(category.name);
-    setEditError("");
-  };
-  const handleUpdate = async (event) => {
-    event.preventDefault();
-
-    if (!editName.trim()) {
-      setEditError("El nombre es obligatorio.");
-      return;
-    }
-
-    try {
-      setEditLoading(true);
-      setEditError("");
-
-      await update(editingCategory.id, {
-        name: editName.trim(),
-      });
-
-      await loadCategories();
-
-      setEditingCategory(null);
-      setEditName("");
-    } catch (error) {
-      console.error("Error al actualizar la categoría:", error);
-
-      setEditError("No se pudo actualizar la categoría.");
-    } finally {
-      setEditLoading(false);
-    }
-  };
-
-  const handleOpenChange = (value) => {
-    setOpen(value);
-
-    if (!value) {
-      setName("");
-      setError("");
-    }
-  };
-  const handleDelete = (category) => {
-    setDeletingCategory(category);
-    setDeleteError("");
-  };
-  const confirmDelete = async () => {
-    if (!deletingCategory) {
-      return;
-    }
-
-    try {
-      setDeleteLoading(true);
-      setDeleteError("");
-
-      await deleteCategory(deletingCategory.id);
-
-      await loadCategories();
-
-      setDeletingCategory(null);
-    } catch (error) {
-      console.error("Error al eliminar la categoría:", error);
-
-      setDeleteError("No se pudo eliminar la categoría.");
-    } finally {
-      setDeleteLoading(false);
-    }
-  };
-  const handleView = async (category) => {
-    try {
-      setViewLoading(true);
-      setViewError("");
-
-      const data = await getOne(category.id);
-
-      setViewingCategory(data);
-    } catch (error) {
-      console.error("Error al obtener la categoría:", error);
-
-      setViewError("No se pudo obtener la información de la categoría.");
-    } finally {
-      setViewLoading(false);
-    }
-  };
+  useEffect(() => {
+    loadCategories();
+  }, []);
 
   return (
     <div className="space-y-6">
