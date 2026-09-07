@@ -8,7 +8,13 @@ import {
   deleteCategory,
 } from "../../services/category.service";
 import CategoryTable from "./CategoryTable";
-
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationPrevious,
+  PaginationNext,
+} from "../ui/pagination";
 import {
   Card,
   CardContent,
@@ -46,29 +52,10 @@ import { Plus } from "lucide-react";
 
 function CategoryList() {
   const [categories, setCategories] = useState([]);
-
-  const [name, setName] = useState("");
-  const [error, setError] = useState("");
-  const [open, setOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [editingCategory, setEditingCategory] = useState(null);
-  const [editName, setEditName] = useState("");
-  const [editError, setEditError] = useState("");
-  const [editLoading, setEditLoading] = useState(false);
-  const [deletingCategory, setDeletingCategory] = useState(null);
-  const [deleteLoading, setDeleteLoading] = useState(false);
-  const [deleteError, setDeleteError] = useState("");
-  const [viewingCategory, setViewingCategory] = useState(null);
-  const [viewLoading, setViewLoading] = useState(false);
-  const [viewError, setViewError] = useState("");
-
-  useEffect(() => {
-    loadCategories();
-  }, []);
-
   const loadCategories = async () => {
     try {
       const data = await getAll();
+
       setCategories(data);
     } catch (error) {
       console.error("Error al obtener las categorías:", error);
@@ -78,7 +65,9 @@ function CategoryList() {
   const handleCreate = async (event) => {
     event.preventDefault();
 
-    if (!name.trim()) {
+    const nameTrim = name.trim();
+
+    if (!nameTrim) {
       setError("El nombre es obligatorio.");
       return;
     }
@@ -87,17 +76,19 @@ function CategoryList() {
       setLoading(true);
       setError("");
 
-      await create({
-        name: name.trim(),
+      const newCategory = await create({
+        name: nameTrim,
       });
 
-      await loadCategories();
+      setCategories((previousCategories) => [
+        ...previousCategories,
+        newCategory,
+      ]);
 
       setName("");
       setOpen(false);
     } catch (error) {
       console.error("Error al crear la categoría:", error);
-
       setError("No se pudo crear la categoría.");
     } finally {
       setLoading(false);
@@ -111,7 +102,9 @@ function CategoryList() {
   const handleUpdate = async (event) => {
     event.preventDefault();
 
-    if (!editName.trim()) {
+    const editNameTrim = editName.trim();
+
+    if (!editNameTrim) {
       setEditError("El nombre es obligatorio.");
       return;
     }
@@ -120,17 +113,20 @@ function CategoryList() {
       setEditLoading(true);
       setEditError("");
 
-      await update(editingCategory.id, {
-        name: editName.trim(),
+      const updatedCategory = await update(editingCategory.id, {
+        name: editNameTrim,
       });
 
-      await loadCategories();
+      setCategories((previousCategories) =>
+        previousCategories.map((category) =>
+          category.id === updatedCategory.id ? updatedCategory : category,
+        ),
+      );
 
       setEditingCategory(null);
       setEditName("");
     } catch (error) {
       console.error("Error al actualizar la categoría:", error);
-
       setEditError("No se pudo actualizar la categoría.");
     } finally {
       setEditLoading(false);
@@ -160,31 +156,18 @@ function CategoryList() {
 
       await deleteCategory(deletingCategory.id);
 
-      await loadCategories();
+      setCategories((previousCategories) =>
+        previousCategories.filter(
+          (category) => category.id !== deletingCategory.id,
+        ),
+      );
 
       setDeletingCategory(null);
     } catch (error) {
       console.error("Error al eliminar la categoría:", error);
-
       setDeleteError("No se pudo eliminar la categoría.");
     } finally {
       setDeleteLoading(false);
-    }
-  };
-  const handleView = async (category) => {
-    try {
-      setViewLoading(true);
-      setViewError("");
-
-      const data = await getOne(category.id);
-
-      setViewingCategory(data);
-    } catch (error) {
-      console.error("Error al obtener la categoría:", error);
-
-      setViewError("No se pudo obtener la información de la categoría.");
-    } finally {
-      setViewLoading(false);
     }
   };
 
@@ -366,7 +349,7 @@ function CategoryList() {
               </AlertDialogContent>
             </AlertDialog>
             <Dialog
-              open={!!viewingCategory || viewLoading}
+              open={Boolean(viewingCategory) || viewLoading}
               onOpenChange={(open) => {
                 if (!open && !viewLoading) {
                   setViewingCategory(null);
@@ -453,6 +436,43 @@ function CategoryList() {
             onEdit={handleEdit}
             onDelete={handleDelete}
           />
+          {pagination && pagination.last_page > 1 && (
+            <Pagination className="mt-4">
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious
+                    href="#"
+                    onClick={(event) => {
+                      event.preventDefault();
+
+                      if (pagination.current_page > 1) {
+                        setCurrentPage(pagination.current_page - 1);
+                      }
+                    }}
+                  />
+                </PaginationItem>
+
+                <PaginationItem>
+                  <span className="px-4 text-sm">
+                    Página {pagination.current_page} de {pagination.last_page}
+                  </span>
+                </PaginationItem>
+
+                <PaginationItem>
+                  <PaginationNext
+                    href="#"
+                    onClick={(event) => {
+                      event.preventDefault();
+
+                      if (pagination.current_page < pagination.last_page) {
+                        setCurrentPage(pagination.current_page + 1);
+                      }
+                    }}
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
+          )}
         </CardContent>
       </Card>
     </div>
