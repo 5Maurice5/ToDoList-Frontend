@@ -53,22 +53,29 @@ import {
 } from "../ui/alert-dialog";
 
 import { Input } from "../ui/input";
+
 import { Label } from "../ui/label";
 import { Plus } from "lucide-react";
 
 function TaskList() {
   const [tasks, setTasks] = useState([]);
   const [categories, setCategories] = useState([]);
+
   const [tags, setTags] = useState([]);
 
   // Crear tarea
   const [title, setTitle] = useState("");
+
   const [description, setDescription] = useState("");
+
   const [status, setStatus] = useState(false);
+
   const [categoryId, setCategoryId] = useState("");
+
   const [selectedTags, setSelectedTags] = useState([]);
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+
   const [error, setError] = useState("");
 
   // Editar tarea
@@ -141,15 +148,16 @@ function TaskList() {
     try {
       setLoading(true);
 
-      const result = await getTasks(page);
+  const handleTagChange = (tagId) => {
+    const numericTagId = Number(tagId);
 
-      setTasks(result.data);
-      setPagination(result.meta);
-    } catch (error) {
-      console.error("Error al obtener las tareas:", error);
-    } finally {
-      setLoading(false);
-    }
+    setSelectedTags((currentTags) => {
+      if (currentTags.includes(numericTagId)) {
+        return currentTags.filter((id) => id !== numericTagId);
+      }
+
+      return [...currentTags, numericTagId];
+    });
   };
 
   /*
@@ -158,7 +166,10 @@ function TaskList() {
   const handleCreate = async (event) => {
     event.preventDefault();
 
-    if (!title.trim()) {
+    const titleTrim = title.trim();
+    const descriptionTrim = description.trim();
+
+    if (!titleTrim) {
       setError("El título es obligatorio.");
       return;
     }
@@ -172,16 +183,15 @@ function TaskList() {
       setLoading(true);
       setError("");
 
-      await create({
-        title: title.trim(),
-        description: description.trim(),
+      const newTask = await create({
+        title: titleTrim,
+        description: descriptionTrim,
         status,
         category_id: Number(categoryId),
         tags: selectedTags,
       });
 
-      // Recargar la página actual
-      await loadData(currentPage);
+      setTasks((previousTasks) => [...previousTasks, newTask]);
 
       setTitle("");
       setDescription("");
@@ -377,7 +387,6 @@ function TaskList() {
               </CardDescription>
             </div>
 
-            {/* BOTÓN NUEVA TAREA */}
             <Dialog open={open} onOpenChange={handleOpenChange}>
               <DialogTrigger render={<Button />}>
                 <Plus className="mr-2 h-4 w-4" />
@@ -395,7 +404,6 @@ function TaskList() {
                   </DialogHeader>
 
                   <div className="grid gap-5 py-6">
-                    {/* TÍTULO */}
                     <div className="grid gap-2">
                       <Label htmlFor="title">Título</Label>
 
@@ -414,7 +422,6 @@ function TaskList() {
                       />
                     </div>
 
-                    {/* DESCRIPCIÓN */}
                     <div className="grid gap-2">
                       <Label htmlFor="description">Descripción</Label>
 
@@ -427,7 +434,6 @@ function TaskList() {
                       />
                     </div>
 
-                    {/* CATEGORÍA */}
                     <div className="grid gap-2">
                       <Label htmlFor="category">Categoría</Label>
 
@@ -453,7 +459,6 @@ function TaskList() {
                       </select>
                     </div>
 
-                    {/* TAGS */}
                     <div className="grid gap-2">
                       <Label>Etiquetas</Label>
 
@@ -483,7 +488,6 @@ function TaskList() {
                       </div>
                     </div>
 
-                    {/* ESTADO */}
                     <div className="flex items-center gap-2">
                       <input
                         id="status"
@@ -495,7 +499,6 @@ function TaskList() {
                       <Label htmlFor="status">Tarea completada</Label>
                     </div>
 
-                    {/* ERROR */}
                     {error && (
                       <p className="text-sm text-destructive">{error}</p>
                     )}
@@ -859,57 +862,7 @@ function TaskList() {
         </CardHeader>
 
         <CardContent>
-          <TaskTable
-            tasks={tasks}
-            onEdit={handleEdit}
-            onDelete={handleDelete}
-            onView={handleView}
-          />
-
-          {/* PAGINACIÓN */}
-          {pagination && pagination.last_page > 1 && (
-            <Pagination className="mt-4">
-              <PaginationContent>
-                {/* ANTERIOR */}
-                <PaginationItem>
-                  <PaginationPrevious
-                    href="#"
-                    onClick={(event) => {
-                      event.preventDefault();
-
-                      if (pagination.current_page > 1 && !loading) {
-                        setCurrentPage(pagination.current_page - 1);
-                      }
-                    }}
-                  />
-                </PaginationItem>
-
-                {/* PÁGINA ACTUAL */}
-                <PaginationItem>
-                  <span className="px-4 text-sm">
-                    Página {pagination.current_page} de {pagination.last_page}
-                  </span>
-                </PaginationItem>
-
-                {/* SIGUIENTE */}
-                <PaginationItem>
-                  <PaginationNext
-                    href="#"
-                    onClick={(event) => {
-                      event.preventDefault();
-
-                      if (
-                        pagination.current_page < pagination.last_page &&
-                        !loading
-                      ) {
-                        setCurrentPage(pagination.current_page + 1);
-                      }
-                    }}
-                  />
-                </PaginationItem>
-              </PaginationContent>
-            </Pagination>
-          )}
+          <TaskTable tasks={tasks} />
         </CardContent>
       </Card>
     </div>
