@@ -18,8 +18,9 @@ function Login() {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+    const emailTrim = email.trim();
 
-    if (!email.trim() || !password.trim()) {
+    if (!emailTrim || !password.trim()) {
       setError("El correo y la contraseña son obligatorios.");
       return;
     }
@@ -29,7 +30,7 @@ function Login() {
       setError("");
 
       const result = await login({
-        email: email.trim(),
+        email: emailTrim,
         password,
       });
 
