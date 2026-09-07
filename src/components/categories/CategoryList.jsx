@@ -61,9 +61,48 @@ function CategoryList() {
       console.error("Error al obtener las categorías:", error);
     }
   };
-  useEffect(() => {
-    loadCategories();
-  }, []);
+
+  const handleCreate = async (event) => {
+    event.preventDefault();
+
+    const nameTrim = name.trim();
+
+    if (!nameTrim) {
+      setError("El nombre es obligatorio.");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError("");
+
+      const newCategory = await create({
+        name: nameTrim,
+      });
+
+      setCategories((previousCategories) => [
+        ...previousCategories,
+        newCategory,
+      ]);
+
+      setName("");
+      setOpen(false);
+    } catch (error) {
+      console.error("Error al crear la categoría:", error);
+      setError("No se pudo crear la categoría.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleOpenChange = (value) => {
+    setOpen(value);
+
+    if (!value) {
+      setName("");
+      setError("");
+    }
+  };
 
   return (
     <div className="space-y-6">
