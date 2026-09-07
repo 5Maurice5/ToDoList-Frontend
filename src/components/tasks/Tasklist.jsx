@@ -521,7 +521,7 @@ function TaskList() {
 
             {/* EDITAR TAREA */}
             <Dialog
-              open={!!editingTask}
+              open={Boolean(editingTask)}
               onOpenChange={(open) => {
                 if (!open && !editLoading) {
                   setEditingTask(null);
@@ -670,7 +670,7 @@ function TaskList() {
 
             {/* VER TAREA */}
             <Dialog
-              open={!!viewingTask || viewLoading}
+              open={Boolean(viewingTask) || viewLoading}
               onOpenChange={(open) => {
                 if (!open && !viewLoading) {
                   setViewingTask(null);
