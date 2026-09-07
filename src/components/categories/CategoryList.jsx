@@ -94,6 +94,44 @@ function CategoryList() {
       setLoading(false);
     }
   };
+  const handleEdit = (category) => {
+    setEditingCategory(category);
+    setEditName(category.name);
+    setEditError("");
+  };
+  const handleUpdate = async (event) => {
+    event.preventDefault();
+
+    const editNameTrim = editName.trim();
+
+    if (!editNameTrim) {
+      setEditError("El nombre es obligatorio.");
+      return;
+    }
+
+    try {
+      setEditLoading(true);
+      setEditError("");
+
+      const updatedCategory = await update(editingCategory.id, {
+        name: editNameTrim,
+      });
+
+      setCategories((previousCategories) =>
+        previousCategories.map((category) =>
+          category.id === updatedCategory.id ? updatedCategory : category,
+        ),
+      );
+
+      setEditingCategory(null);
+      setEditName("");
+    } catch (error) {
+      console.error("Error al actualizar la categoría:", error);
+      setEditError("No se pudo actualizar la categoría.");
+    } finally {
+      setEditLoading(false);
+    }
+  };
 
   const handleOpenChange = (value) => {
     setOpen(value);
