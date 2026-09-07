@@ -34,37 +34,7 @@ function CategoryTable({ categories, onEdit, onDelete, onView }) {
                 <TableCell>{category.name}</TableCell>
 
                 <TableCell>
-                  <div className="flex justify-end gap-2">
-                    {/* Ver */}
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => onView(category)}
-                      title="Ver categoría"
-                    >
-                      <Eye className="h-4 w-4" />
-                    </Button>
-
-                    {/* Editar */}
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => onEdit(category)}
-                    >
-                      <Pencil className="mr-2 h-4 w-4" />
-                      Editar
-                    </Button>
-
-                    {/* Eliminar */}
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => onDelete(category)}
-                    >
-                      <Trash2 className="mr-2 h-4 w-4" />
-                      Eliminar
-                    </Button>
-                  </div>
+                  <div className="flex justify-end gap-2"></div>
                 </TableCell>
               </TableRow>
             ))
