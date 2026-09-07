@@ -349,9 +349,6 @@ function TaskList() {
 
       await deleteTask(deletingTask.id);
 
-      // Recargar la página actual
-      await loadData(currentPage);
-
       setDeletingTask(null);
     } catch (error) {
       console.error("Error al eliminar la tarea:", error);
@@ -815,7 +812,7 @@ function TaskList() {
 
             {/* ELIMINAR TAREA */}
             <AlertDialog
-              open={!!deletingTask}
+              open={Boolean(deletingTask)}
               onOpenChange={(open) => {
                 if (!open && !deleteLoading) {
                   setDeletingTask(null);
